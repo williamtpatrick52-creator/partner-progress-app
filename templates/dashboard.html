@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app-shell">
+
+    <header class="hero">
+        <div>
+            <p class="eyebrow">Wallace & Williamson</p>
+            <h1>Daily Progress</h1>
+            <p class="subtitle">Track projects and priorities.</p>
+        </div>
+        <a class="logout-link" href="/logout">Logout</a>
+    </header>
+
+    <div class="dashboard-grid">
+
+        <div>
+
+            <section class="action-row">
+                <p>Logged in as <strong>{{ username }}</strong></p>
+
+                <div class="button-group">
+                    <a class="primary-button" href="/add-update">+ Add Update</a>
+                    <a class="secondary-button" href="/add-project">+ Add Project</a>
+                </div>
+            </section>
+
+            <h2>Projects</h2>
+
+            <div class="project-filter-row">
+                <a class="filter-pill {% if not selected_project_id %}active-filter{% endif %}" href="/dashboard">
+                    All Updates
+                </a>
+
+                {% for project in projects %}
+                    <a class="filter-pill {% if selected_project_id == project.id %}active-filter{% endif %}" href="/dashboard?project_id={{ project.id }}">
+                        {{ project.icon }} {{ project.name }}
+                    </a>
+                {% endfor %}
+            </div>
+
+            <div class="project-grid">
+                {% for project in projects %}
+                    <a class="project-card" href="/dashboard?project_id={{ project.id }}">
+                        <div class="project-icon">{{ project.icon }}</div>
+                        <div>
+                            <h3>{{ project.name }}</h3>
+                            <p>{{ project.description }}</p>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+
+            <div class="updates-title-row">
+                {% if selected_project %}
+                    <h2>{{ selected_project.icon }} {{ selected_project.name }} Updates</h2>
+                    <a class="secondary-button" href="/edit-project/{{ selected_project.id }}">Edit Project</a>
+                {% else %}
+                    <h2>Latest Updates</h2>
+                {% endif %}
+            </div>
+
+            <div class="timeline">
+                {% for update in latest_updates %}
+                    <div class="update-card">
+
+                        <div class="update-header">
+                            <div class="update-project">
+                                <span class="update-icon">{{ update.project_icon }}</span>
+                                <div>
+                                    <h3>{{ update.project_name }}</h3>
+                                    <small>{{ update.created_at }}</small>
+                                </div>
+                            </div>
+
+                            <span class="status status-{{ update.status|lower|replace(' ', '-') }}">
+                                {{ update.status }}
+                            </span>
+                        </div>
+
+                        <p class="update-note">{{ update.note }}</p>
+
+                        {% if update.attachment %}
+                            {% if update.attachment_type == "image" %}
+                                <img class="update-image" src="/static/uploads/{{ update.attachment }}" alt="Update attachment">
+                            {% elif update.attachment_type == "video" %}
+                                <video class="update-video" controls>
+                                    <source src="/static/uploads/{{ update.attachment }}">
+                                    Your browser does not support the video tag.
+                                </video>
+                            {% else %}
+                                <a class="attachment-link" href="/static/uploads/{{ update.attachment }}" target="_blank">
+                                    📎 Open Document
+                                </a>
+                            {% endif %}
+                        {% endif %}
+
+                        <small class="update-author">By {{ update.author }}</small>
+
+                        <div class="update-actions">
+                            <a href="/edit-update/{{ update.id }}" class="secondary-button">Edit</a>
+                        </div>
+
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No updates found for this view.</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+        </div>
+
+        <div class="task-panel">
+
+            <h2>Priority List</h2>
+
+            <form method="POST" action="/add-task" class="task-form">
+                <input name="text" placeholder="Add task..." required>
+
+                <select name="status">
+                    <option value="Needs Attention">🔴 Needs Attention</option>
+                    <option value="Pending">🟡 Pending</option>
+                    <option value="Possible">🔔 Possible</option>
+                    <option value="Done">✅ Done</option>
+                </select>
+
+                <button type="submit">Add</button>
+            </form>
+
+            <div class="task-list">
+                {% for task in tasks %}
+                    <div class="task-item {% if task.status == 'Done' %}task-done{% endif %}">
+
+                        <div class="task-main">
+                            <div class="task-text">{{ task.text }}</div>
+
+                            <div class="task-status-buttons">
+
+                                <form method="POST" action="/set-task-status/{{ task.id }}/Needs Attention">
+                                    <button class="status-dot red-dot {% if task.status == 'Needs Attention' %}active-task-status{% endif %}" type="submit" title="Needs Attention"></button>
+                                </form>
+
+                                <form method="POST" action="/set-task-status/{{ task.id }}/Pending">
+                                    <button class="status-dot yellow-dot {% if task.status == 'Pending' %}active-task-status{% endif %}" type="submit" title="Pending"></button>
+                                </form>
+
+                                <form method="POST" action="/set-task-status/{{ task.id }}/Possible">
+                                    <button class="status-dot bell-dot {% if task.status == 'Possible' %}active-task-status{% endif %}" type="submit" title="Possible">🔔</button>
+                                </form>
+
+                                <form method="POST" action="/set-task-status/{{ task.id }}/Done">
+                                    <button class="status-dot check-dot {% if task.status == 'Done' %}done-check{% endif %}" type="submit" title="Done">✓</button>
+                                </form>
+
+                            </div>
+                        </div>
+
+                        <div class="task-actions">
+                            <a href="/edit-task/{{ task.id }}">✏️</a>
+                        </div>
+
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No tasks yet.</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Project</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app-shell">
+
+    <a class="back-link" href="/dashboard">← Back to Dashboard</a>
+
+    <header class="hero small-hero">
+        <div>
+            <p class="eyebrow">New Project</p>
+            <h1>Add Project</h1>
+            <p class="subtitle">Pick an icon and create your project.</p>
+        </div>
+    </header>
+
+    <form class="form-card" method="POST">
+
+        <label>Project Icon</label>
+        <select name="icon" required>
+            <option value="">-- Choose an icon --</option>
+
+            <option value="🎮">🎮 Game / Development</option>
+            <option value="💼">💼 Business</option>
+            <option value="🛒">🛒 Ecommerce / Amazon</option>
+            <option value="📦">📦 Product / Inventory</option>
+            <option value="📊">📊 Analytics / Data</option>
+            <option value="🌐">🌐 Website</option>
+            <option value="🚀">🚀 Launch</option>
+            <option value="🧠">🧠 Ideas / Learning</option>
+            <option value="📱">📱 App / Mobile</option>
+            <option value="💻">💻 Coding / Software</option>
+            <option value="🎯">🎯 Goals</option>
+            <option value="📅">📅 Planning</option>
+            <option value="🏠">🏠 Personal</option>
+
+        </select>
+
+        <label>Project Name</label>
+        <input name="name" placeholder="Example: 2D Game" required>
+
+        <label>Description</label>
+        <textarea name="description" placeholder="What is this project about?" required></textarea>
+
+        <button type="submit">Create Project</button>
+    </form>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ project.name }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app-shell">
+
+    <a class="back-link" href="/dashboard?project_id={{ project.id }}">← Back to Dashboard</a>
+
+    <header class="hero small-hero">
+        <div>
+            <p class="eyebrow">{{ project.icon }} Project</p>
+            <h1>{{ project.name }}</h1>
+            <p class="subtitle">{{ project.description }}</p>
+        </div>
+    </header>
+
+    <div class="button-group project-actions">
+        <a class="primary-button" href="/add-update">+ Add Update</a>
+        <a class="secondary-button" href="/edit-project/{{ project.id }}">Edit Project</a>
+    </div>
+
+    <h2>Updates</h2>
+
+    <div class="timeline">
+        {% for update in updates %}
+            <div class="update-card">
+
+                <div class="update-header">
+                    <div>
+                        <small>{{ update.created_at }}</small>
+                    </div>
+
+                    <span class="status status-{{ update.status|lower|replace(' ', '-') }}">
+                        {{ update.status }}
+                    </span>
+                </div>
+
+                <p class="update-note">{{ update.note }}</p>
+
+                {% if update.attachment %}
+                    {% if update.attachment_type == "image" %}
+                        <img class="update-image" src="/static/uploads/{{ update.attachment }}" alt="Update attachment">
+                    {% elif update.attachment_type == "video" %}
+                        <video class="update-video" controls>
+                            <source src="/static/uploads/{{ update.attachment }}">
+                            Your browser does not support the video tag.
+                        </video>
+                    {% else %}
+                        <a class="attachment-link" href="/static/uploads/{{ update.attachment }}" target="_blank">
+                            📎 Open Document
+                        </a>
+                    {% endif %}
+                {% endif %}
+
+                <small class="update-author">By {{ update.author }}</small>
+
+                <div class="update-actions">
+                    <a href="/edit-update/{{ update.id }}" class="secondary-button">Edit</a>
+                </div>
+
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>No updates yet for this project.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+</div>
+</body>
+</html>
