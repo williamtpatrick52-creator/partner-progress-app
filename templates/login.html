@@ -1,24 +1,34 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login</title>
+    <title>Wallace & Williamson Login</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<div class="container">
-    <h1>Project Progress Login</h1>
+<div class="app-shell">
 
-    {% if error %}
-        <p class="error">{{ error }}</p>
-    {% endif %}
+    <header class="hero small-hero">
+        <div>
+            <p class="eyebrow">Wallace & Williamson</p>
+            <h1>Project Progress Login</h1>
+            <p class="subtitle">Private project tracker for your team.</p>
+        </div>
+    </header>
 
-    <form method="POST">
+    <form class="form-card" method="POST">
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <label>Username</label>
         <input name="username" placeholder="Username" required>
-        <input name="password" type="password" placeholder="Password" required>
+
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Password" required>
+
         <button type="submit">Log In</button>
     </form>
 
-    <p class="hint">Test users: tj / password123 or partner / password123</p>
 </div>
 </body>
 </html>

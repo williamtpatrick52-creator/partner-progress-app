@@ -13,8 +13,8 @@ UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 USERS = {
-    "tj": generate_password_hash("password123"),
-    "partner": generate_password_hash("password123")
+    "tj": generate_password_hash("Adidas40!"),
+    "ryan": generate_password_hash("Adidas40!")
 }
 
 ALLOWED_EXTENSIONS = {
