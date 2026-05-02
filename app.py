@@ -54,6 +54,16 @@ class UpdateFile(db.Model):
     file_type = db.Column(db.String(50))
 
 
+class UpdateComment(db.Model):
+    __tablename__ = "update_comments"
+
+    id = db.Column(db.Integer, primary_key=True)
+    update_id = db.Column(db.Integer, nullable=False)
+    author = db.Column(db.String(100))
+    comment = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.String(100))
+
+
 class Task(db.Model):
     __tablename__ = "tasks"
 
@@ -133,6 +143,7 @@ def dashboard():
     for update in updates:
         project = Project.query.get(update.project_id)
         files = UpdateFile.query.filter_by(update_id=update.id).all()
+        comments = UpdateComment.query.filter_by(update_id=update.id).order_by(UpdateComment.id.asc()).all()
 
         latest_updates.append({
             "id": update.id,
@@ -142,7 +153,8 @@ def dashboard():
             "author": update.author,
             "note": update.note,
             "created_at": update.created_at,
-            "files": files
+            "files": files,
+            "comments": comments
         })
 
     tasks = Task.query.all()
@@ -195,7 +207,7 @@ def edit_project(id):
     return render_template("edit_project.html", project=project)
 
 
-@app.route("/delete-project/<int:id>", methods=["POST", "GET"])
+@app.route("/delete-project/<int:id>", methods=["GET", "POST"])
 def delete_project(id):
     if not login_required():
         return redirect("/")
@@ -204,6 +216,7 @@ def delete_project(id):
 
     for update in updates:
         UpdateFile.query.filter_by(update_id=update.id).delete()
+        UpdateComment.query.filter_by(update_id=update.id).delete()
         db.session.delete(update)
 
     Project.query.filter_by(id=id).delete()
@@ -278,8 +291,41 @@ def delete_update(id):
         return redirect("/")
 
     UpdateFile.query.filter_by(update_id=id).delete()
+    UpdateComment.query.filter_by(update_id=id).delete()
     Update.query.filter_by(id=id).delete()
 
+    db.session.commit()
+
+    return redirect("/dashboard")
+
+
+@app.route("/add-comment/<int:update_id>", methods=["POST"])
+def add_comment(update_id):
+    if not login_required():
+        return redirect("/")
+
+    comment_text = request.form.get("comment", "").strip()
+
+    if comment_text:
+        comment = UpdateComment(
+            update_id=update_id,
+            author=session["username"],
+            comment=comment_text,
+            created_at=datetime.now().strftime("%Y-%m-%d %I:%M %p")
+        )
+
+        db.session.add(comment)
+        db.session.commit()
+
+    return redirect("/dashboard")
+
+
+@app.route("/delete-comment/<int:id>", methods=["GET", "POST"])
+def delete_comment(id):
+    if not login_required():
+        return redirect("/")
+
+    UpdateComment.query.filter_by(id=id).delete()
     db.session.commit()
 
     return redirect("/dashboard")

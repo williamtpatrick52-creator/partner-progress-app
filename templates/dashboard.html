@@ -1,35 +1,239 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Wallace & Williamson Dashboard</title>
+    <title>Wallace & Williamson Progress Portal</title>
     <style>
-        body { margin: 0; font-family: Arial, sans-serif; background: #eef3f8; color: #07111f; }
-        .banner { background: #000; color: #fff; padding: 22px; text-align: center; font-size: 30px; font-weight: bold; letter-spacing: 2px; animation: glow 2s infinite alternate; }
-        @keyframes glow { from { text-shadow: 0 0 5px #fff; } to { text-shadow: 0 0 18px #00ffcc, 0 0 30px #00ffcc; } }
-        .page { display: grid; grid-template-columns: 2fr 1fr; gap: 26px; padding: 28px; }
-        .top-card, .card, .sidebar { background: white; border-radius: 18px; padding: 22px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
-        .top-card { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .btn { display: inline-block; padding: 10px 16px; border-radius: 10px; text-decoration: none; font-weight: bold; margin: 6px 6px 0 0; border: none; cursor: pointer; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #eef3f8;
+            color: #07111f;
+        }
+
+        .banner {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(120deg, #001f3f, #004aad, #00a3ff);
+            color: #fff;
+            padding: 28px 24px;
+            text-align: center;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+        }
+
+        .banner::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -20%;
+            width: 140%;
+            height: 200%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.18), transparent 26%),
+                radial-gradient(circle at 60% 40%, rgba(255,255,255,0.12), transparent 22%),
+                radial-gradient(circle at 90% 60%, rgba(255,255,255,0.16), transparent 28%);
+            animation: waveMove 6s ease-in-out infinite alternate;
+        }
+
+        @keyframes waveMove {
+            from { transform: translateX(-4%) rotate(-2deg); }
+            to { transform: translateX(4%) rotate(2deg); }
+        }
+
+        .banner-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .portal-title {
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .business-title {
+            font-size: 18px;
+            font-weight: bold;
+            opacity: 0.95;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .page {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 26px;
+            padding: 28px;
+        }
+
+        .top-card, .card, .sidebar {
+            background: white;
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        }
+
+        .top-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 16px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 6px 6px 0 0;
+            border: none;
+            cursor: pointer;
+        }
+
         .btn-green { background: #008a22; color: white; }
         .btn-blue { border: 1px solid #2563eb; color: #2563eb; background: white; }
         .btn-red { background: #dc3545; color: white; }
         .btn-yellow { background: #ffc107; color: black; }
+        .btn-dark { background: #07111f; color: white; }
+
         .project-row { margin: 10px 0; }
-        .project-pill { display: inline-block; padding: 9px 14px; border-radius: 999px; background: #f7f9fc; border: 1px solid #d4dbe6; text-decoration: none; color: #07111f; font-weight: bold; }
-        .update-card { background: #f9fbff; border-radius: 16px; padding: 20px; margin-bottom: 18px; border: 1px solid #e1e7f0; }
-        .timestamp { color: #39ff14; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; font-weight: bold; font-size: 18px; }
-        .file-preview img, .file-preview video { max-width: 320px; width: 100%; border-radius: 12px; margin-top: 14px; display: block; }
-        .file-preview a { display: inline-block; margin-top: 12px; color: #2563eb; font-weight: bold; }
-        .task-form input, .task-form select, .task-form button { width: 100%; padding: 11px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #cfd7e3; box-sizing: border-box; font-size: 15px; }
-        .task-form button { background: #07111f; color: white; font-weight: bold; cursor: pointer; }
-        .task-item { padding: 12px; background: #f7f9fc; border-radius: 12px; margin-bottom: 10px; border: 1px solid #e1e7f0; }
-        .done { text-decoration: line-through; opacity: 0.65; }
-        @media (max-width: 900px) { .page { grid-template-columns: 1fr; } .top-card { display: block; } }
+
+        .project-pill {
+            display: inline-block;
+            padding: 9px 14px;
+            border-radius: 999px;
+            background: #f7f9fc;
+            border: 1px solid #d4dbe6;
+            text-decoration: none;
+            color: #07111f;
+            font-weight: bold;
+        }
+
+        .update-card {
+            background: #f9fbff;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 18px;
+            border: 1px solid #e1e7f0;
+        }
+
+        .timestamp {
+            color: #39ff14;
+            text-shadow:
+                -1px -1px 0 #000,
+                 1px -1px 0 #000,
+                -1px  1px 0 #000,
+                 1px  1px 0 #000;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .file-preview img,
+        .file-preview video {
+            max-width: 320px;
+            width: 100%;
+            border-radius: 12px;
+            margin-top: 14px;
+            display: block;
+        }
+
+        .file-preview a {
+            display: inline-block;
+            margin-top: 12px;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .comments {
+            margin-top: 18px;
+            padding: 14px;
+            background: #eef4ff;
+            border-radius: 14px;
+            border: 1px solid #d7e4fb;
+        }
+
+        .comment {
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #dde6f2;
+        }
+
+        .comment-meta {
+            font-size: 13px;
+            color: #4b5b73;
+            margin-bottom: 4px;
+        }
+
+        .comment-form textarea {
+            width: 100%;
+            min-height: 70px;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #cfd7e3;
+            box-sizing: border-box;
+            margin-top: 8px;
+            font-family: Arial, sans-serif;
+        }
+
+        .comment-form button {
+            margin-top: 8px;
+        }
+
+        .task-form input,
+        .task-form select,
+        .task-form button {
+            width: 100%;
+            padding: 11px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border: 1px solid #cfd7e3;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+
+        .task-form button {
+            background: #07111f;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .task-item {
+            padding: 12px;
+            background: #f7f9fc;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #e1e7f0;
+        }
+
+        .done {
+            text-decoration: line-through;
+            opacity: 0.65;
+        }
+
+        @media (max-width: 900px) {
+            .page {
+                grid-template-columns: 1fr;
+            }
+
+            .top-card {
+                display: block;
+            }
+        }
     </style>
 </head>
+
 <body>
 
-<div class="banner">Wallace & Williamson</div>
+<div class="banner">
+    <div class="banner-content">
+        <div class="portal-title">Progress Portal</div>
+        <div class="business-title">Wallace &amp; Williamson</div>
+    </div>
+</div>
 
 <div class="page">
     <main>
@@ -84,6 +288,29 @@
 
                         <br>
                         <a class="btn btn-yellow" href="/edit-update/{{ update.id }}">Edit Update</a>
+
+                        <div class="comments">
+                            <h4>Comments</h4>
+
+                            {% if update.comments %}
+                                {% for comment in update.comments %}
+                                    <div class="comment">
+                                        <div class="comment-meta">
+                                            <strong>{{ comment.author }}</strong> · {{ comment.created_at }}
+                                            <a href="/delete-comment/{{ comment.id }}" style="float:right; color:#dc3545;">Delete</a>
+                                        </div>
+                                        <div>{{ comment.comment }}</div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p>No comments yet.</p>
+                            {% endif %}
+
+                            <form class="comment-form" method="POST" action="/add-comment/{{ update.id }}">
+                                <textarea name="comment" placeholder="Add a comment..." required></textarea>
+                                <button class="btn btn-blue" type="submit">Post Comment</button>
+                            </form>
+                        </div>
                     </div>
                 {% endfor %}
             {% else %}
