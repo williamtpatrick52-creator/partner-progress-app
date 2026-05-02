@@ -1,268 +1,206 @@
-import os
 from flask import Flask, render_template, request, redirect, session
 from flask_sqlalchemy import SQLAlchemy
+import os
 from datetime import datetime
-from supabase import create_client
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "secret")
+app.secret_key = os.environ.get("SECRET_KEY", "dev")
 
-# ======================
-# DATABASE
-# ======================
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 db = SQLAlchemy(app)
 
-# ======================
-# SUPABASE
-# ======================
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-BUCKET = "uploads"
-
-# ======================
-# MODELS (FIXED)
-# ======================
+# -----------------------------
+# MODELS
+# -----------------------------
 
 class Project(db.Model):
-    __tablename__ = "projects"
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100))
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
     icon = db.Column(db.String(10))
 
+
 class Update(db.Model):
-    __tablename__ = "updates"
     id = db.Column(db.Integer, primary_key=True)
-    project_id = db.Column(db.Integer)
+    project_id = db.Column(db.Integer, db.ForeignKey("project.id"))
+    content = db.Column(db.Text)
     status = db.Column(db.String(50))
-    author = db.Column(db.String(50))
-    note = db.Column(db.Text)
+    author = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    project = db.relationship("Project")
+
+
 class UpdateFile(db.Model):
-    __tablename__ = "update_files"
     id = db.Column(db.Integer, primary_key=True)
-    update_id = db.Column(db.Integer)
-    file_url = db.Column(db.Text)
-    file_type = db.Column(db.String(20))
+    update_id = db.Column(db.Integer, db.ForeignKey("update.id", ondelete="CASCADE"))
+    file_url = db.Column(db.Text, nullable=False)
+    file_type = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-class Task(db.Model):
-    __tablename__ = "tasks"
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.Text)
-    status = db.Column(db.String(20))
 
-# ======================
+# -----------------------------
 # HELPERS
-# ======================
+# -----------------------------
 
-def logged_in():
+def login_required():
     return "username" in session
 
-def get_file_type(filename):
-    ext = filename.split(".")[-1].lower()
-    if ext in ["png","jpg","jpeg","gif"]:
-        return "image"
-    if ext in ["mp4","mov"]:
-        return "video"
-    return "file"
 
-def upload_to_supabase(file):
-    filename = f"{datetime.now().timestamp()}_{file.filename}"
-    supabase.storage.from_(BUCKET).upload(filename, file.read())
-    return f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{filename}"
-
-# ======================
-# AUTH
-# ======================
+# -----------------------------
+# ROUTES
+# -----------------------------
 
 @app.route("/")
 def home():
-    if not logged_in():
-        return redirect("/login")
-    return redirect("/dashboard")
+    if login_required():
+        return redirect("/dashboard")
+    return redirect("/login")
 
-@app.route("/login", methods=["GET","POST"])
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         session["username"] = request.form["username"]
         return redirect("/dashboard")
     return render_template("login.html")
 
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/login")
 
-# ======================
-# DASHBOARD
-# ======================
+
+# -----------------------------
+# DASHBOARD (FIXED)
+# -----------------------------
 
 @app.route("/dashboard")
 def dashboard():
-    if not logged_in():
+    if not login_required():
         return redirect("/login")
 
+    project_id = request.args.get("project_id")
+
     projects = Project.query.all()
-    tasks = Task.query.all()
-    updates = Update.query.order_by(Update.created_at.desc()).all()
+
+    updates_query = Update.query
+
+    if project_id:
+        updates_query = updates_query.filter_by(project_id=project_id)
+
+    updates = updates_query.order_by(Update.created_at.desc()).all()
 
     latest_updates = []
 
     for u in updates:
-        project = Project.query.get(u.project_id)
         files = UpdateFile.query.filter_by(update_id=u.id).all()
+
+        # ✅ SAFE DATE FIX
+        if hasattr(u.created_at, "strftime"):
+            created_at = u.created_at.strftime("%Y-%m-%d %I:%M %p")
+        else:
+            created_at = str(u.created_at)
 
         latest_updates.append({
             "id": u.id,
-            "project_name": project.name if project else "",
-            "project_icon": project.icon if project else "",
+            "project_name": u.project.name,
+            "project_icon": u.project.icon,
             "status": u.status,
             "author": u.author,
-            "note": u.note,
-            "created_at": u.created_at.strftime("%Y-%m-%d %I:%M %p"),
+            "note": u.content,
+            "created_at": created_at,
             "files": files
         })
 
-    return render_template("dashboard.html",
+    return render_template(
+        "dashboard.html",
         username=session["username"],
         projects=projects,
-        latest_updates=latest_updates,
-        tasks=tasks
+        latest_updates=latest_updates
     )
 
-# ======================
-# PROJECTS
-# ======================
 
-@app.route("/add-project", methods=["GET","POST"])
+# -----------------------------
+# ADD PROJECT
+# -----------------------------
+
+@app.route("/add-project", methods=["GET", "POST"])
 def add_project():
+    if not login_required():
+        return redirect("/login")
+
     if request.method == "POST":
-        db.session.add(Project(
+        project = Project(
             name=request.form["name"],
-            icon=request.form["icon"]
-        ))
+            description=request.form.get("description"),
+            icon=request.form.get("icon", "📁")
+        )
+        db.session.add(project)
         db.session.commit()
         return redirect("/dashboard")
 
     return render_template("add_project.html")
 
-@app.route("/edit-project/<int:id>", methods=["GET","POST"])
-def edit_project(id):
-    project = Project.query.get(id)
 
-    if request.method == "POST":
-        project.name = request.form["name"]
-        project.icon = request.form["icon"]
-        db.session.commit()
-        return redirect("/dashboard")
+# -----------------------------
+# ADD UPDATE (MULTI FILE READY)
+# -----------------------------
 
-    return render_template("edit_project.html", project=project)
-
-@app.route("/delete-project/<int:id>")
-def delete_project(id):
-    project = Project.query.get(id)
-    db.session.delete(project)
-    db.session.commit()
-    return redirect("/dashboard")
-
-# ======================
-# UPDATES
-# ======================
-
-@app.route("/add-update", methods=["GET","POST"])
+@app.route("/add-update", methods=["GET", "POST"])
 def add_update():
+    if not login_required():
+        return redirect("/login")
+
     projects = Project.query.all()
 
     if request.method == "POST":
         update = Update(
             project_id=request.form["project_id"],
+            content=request.form["content"],
             status=request.form["status"],
-            author=session["username"],
-            note=request.form["note"]
+            author=session["username"]
         )
 
         db.session.add(update)
         db.session.commit()
 
-        files = request.files.getlist("attachments")
+        # HANDLE MULTIPLE FILES
+        files = request.files.getlist("files")
 
-        for f in files:
-            if f.filename:
-                url = upload_to_supabase(f)
-                file_type = get_file_type(f.filename)
+        for file in files:
+            if file and file.filename != "":
+                filename = file.filename
+                path = os.path.join("static/uploads", filename)
+                file.save(path)
 
-                db.session.add(UpdateFile(
+                file_type = "file"
+                if filename.lower().endswith((".png", ".jpg", ".jpeg", ".gif")):
+                    file_type = "image"
+                elif filename.lower().endswith((".mp4", ".mov")):
+                    file_type = "video"
+
+                new_file = UpdateFile(
                     update_id=update.id,
-                    file_url=url,
+                    file_url=filename,
                     file_type=file_type
-                ))
+                )
+
+                db.session.add(new_file)
 
         db.session.commit()
+
         return redirect("/dashboard")
 
     return render_template("add_update.html", projects=projects)
 
-@app.route("/edit-update/<int:id>", methods=["GET","POST"])
-def edit_update(id):
-    update = Update.query.get(id)
-    projects = Project.query.all()
 
-    if request.method == "POST":
-        update.project_id = request.form["project_id"]
-        update.status = request.form["status"]
-        update.note = request.form["note"]
-        db.session.commit()
-        return redirect("/dashboard")
-
-    return render_template("edit_update.html", update=update, projects=projects)
-
-@app.route("/delete-update/<int:id>")
-def delete_update(id):
-    UpdateFile.query.filter_by(update_id=id).delete()
-    update = Update.query.get(id)
-    db.session.delete(update)
-    db.session.commit()
-    return redirect("/dashboard")
-
-# ======================
-# TASKS
-# ======================
-
-@app.route("/add-task", methods=["POST"])
-def add_task():
-    db.session.add(Task(
-        text=request.form["text"],
-        status=request.form["status"]
-    ))
-    db.session.commit()
-    return redirect("/dashboard")
-
-@app.route("/edit-task/<int:id>", methods=["GET","POST"])
-def edit_task(id):
-    task = Task.query.get(id)
-
-    if request.method == "POST":
-        task.text = request.form["text"]
-        task.status = request.form["status"]
-        db.session.commit()
-        return redirect("/dashboard")
-
-    return render_template("edit_task.html", task=task)
-
-@app.route("/delete-task/<int:id>")
-def delete_task(id):
-    task = Task.query.get(id)
-    db.session.delete(task)
-    db.session.commit()
-    return redirect("/dashboard")
-
-# ======================
+# -----------------------------
 # RUN
-# ======================
+# -----------------------------
 
 if __name__ == "__main__":
     app.run(debug=True)
