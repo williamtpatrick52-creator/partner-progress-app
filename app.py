@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request, redirect, session
-from flask_sqlalchemy import SQLAlchemy
 import os
 from datetime import datetime
+from flask import Flask, render_template, request, redirect, session
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev")
@@ -12,33 +12,45 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 # -----------------------------
-# MODELS
+# MODELS (FIXED TABLE NAMES)
 # -----------------------------
 
 class Project(db.Model):
+    __tablename__ = "projects"
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
-    icon = db.Column(db.String(10))
+    icon = db.Column(db.String(20))
 
 
 class Update(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    project_id = db.Column(db.Integer, db.ForeignKey("project.id"))
-    content = db.Column(db.Text)
-    status = db.Column(db.String(50))
-    author = db.Column(db.String(100))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    __tablename__ = "updates"
 
-    project = db.relationship("Project")
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, nullable=False)
+    author = db.Column(db.String(100))
+    status = db.Column(db.String(50))
+    note = db.Column(db.Text)
+    created_at = db.Column(db.String(100))
 
 
 class UpdateFile(db.Model):
+    __tablename__ = "update_files"
+
     id = db.Column(db.Integer, primary_key=True)
-    update_id = db.Column(db.Integer, db.ForeignKey("update.id", ondelete="CASCADE"))
-    file_url = db.Column(db.Text, nullable=False)
-    file_type = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    update_id = db.Column(db.Integer, nullable=False)
+    file_url = db.Column(db.Text)
+    file_type = db.Column(db.String(50))
+
+
+class Task(db.Model):
+    __tablename__ = "tasks"
+
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.Text)
+    status = db.Column(db.String(100))
+    created_at = db.Column(db.String(100))
 
 
 # -----------------------------
@@ -53,35 +65,29 @@ def login_required():
 # ROUTES
 # -----------------------------
 
-@app.route("/")
-def home():
-    if login_required():
-        return redirect("/dashboard")
-    return redirect("/login")
-
-
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        session["username"] = request.form["username"]
-        return redirect("/dashboard")
+        username = request.form["username"]
+        password = request.form["password"]
+
+        if username and password:
+            session["username"] = username
+            return redirect("/dashboard")
+
     return render_template("login.html")
 
 
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect("/login")
+    return redirect("/")
 
-
-# -----------------------------
-# DASHBOARD (FIXED)
-# -----------------------------
 
 @app.route("/dashboard")
 def dashboard():
     if not login_required():
-        return redirect("/login")
+        return redirect("/")
 
     project_id = request.args.get("project_id")
 
@@ -92,35 +98,33 @@ def dashboard():
     if project_id:
         updates_query = updates_query.filter_by(project_id=project_id)
 
-    updates = updates_query.order_by(Update.created_at.desc()).all()
+    updates = updates_query.order_by(Update.id.desc()).all()
 
     latest_updates = []
 
     for u in updates:
+        project = Project.query.get(u.project_id)
         files = UpdateFile.query.filter_by(update_id=u.id).all()
-
-        # ✅ SAFE DATE FIX
-        if hasattr(u.created_at, "strftime"):
-            created_at = u.created_at.strftime("%Y-%m-%d %I:%M %p")
-        else:
-            created_at = str(u.created_at)
 
         latest_updates.append({
             "id": u.id,
-            "project_name": u.project.name,
-            "project_icon": u.project.icon,
+            "project_name": project.name if project else "Unknown",
+            "project_icon": project.icon if project else "📁",
             "status": u.status,
             "author": u.author,
-            "note": u.content,
-            "created_at": created_at,
+            "note": u.note,
+            "created_at": u.created_at,
             "files": files
         })
+
+    tasks = Task.query.all()
 
     return render_template(
         "dashboard.html",
         username=session["username"],
         projects=projects,
-        latest_updates=latest_updates
+        latest_updates=latest_updates,
+        tasks=tasks
     )
 
 
@@ -131,7 +135,7 @@ def dashboard():
 @app.route("/add-project", methods=["GET", "POST"])
 def add_project():
     if not login_required():
-        return redirect("/login")
+        return redirect("/")
 
     if request.method == "POST":
         project = Project(
@@ -139,48 +143,52 @@ def add_project():
             description=request.form.get("description"),
             icon=request.form.get("icon", "📁")
         )
+
         db.session.add(project)
         db.session.commit()
+
         return redirect("/dashboard")
 
     return render_template("add_project.html")
 
 
 # -----------------------------
-# ADD UPDATE (MULTI FILE READY)
+# ADD UPDATE (MULTI FILE)
 # -----------------------------
 
 @app.route("/add-update", methods=["GET", "POST"])
 def add_update():
     if not login_required():
-        return redirect("/login")
+        return redirect("/")
 
     projects = Project.query.all()
 
     if request.method == "POST":
         update = Update(
             project_id=request.form["project_id"],
-            content=request.form["content"],
+            author=session["username"],
             status=request.form["status"],
-            author=session["username"]
+            note=request.form["note"],
+            created_at=datetime.now().strftime("%Y-%m-%d %I:%M %p")
         )
 
         db.session.add(update)
         db.session.commit()
 
-        # HANDLE MULTIPLE FILES
         files = request.files.getlist("files")
 
         for file in files:
-            if file and file.filename != "":
+            if file and file.filename:
                 filename = file.filename
+
                 path = os.path.join("static/uploads", filename)
                 file.save(path)
 
                 file_type = "file"
-                if filename.lower().endswith((".png", ".jpg", ".jpeg", ".gif")):
+
+                if filename.lower().endswith(("png","jpg","jpeg","gif")):
                     file_type = "image"
-                elif filename.lower().endswith((".mp4", ".mov")):
+                elif filename.lower().endswith(("mp4","mov")):
                     file_type = "video"
 
                 new_file = UpdateFile(
@@ -196,6 +204,38 @@ def add_update():
         return redirect("/dashboard")
 
     return render_template("add_update.html", projects=projects)
+
+
+# -----------------------------
+# TASKS
+# -----------------------------
+
+@app.route("/add-task", methods=["POST"])
+def add_task():
+    if not login_required():
+        return redirect("/")
+
+    task = Task(
+        text=request.form["text"],
+        status=request.form["status"],
+        created_at=datetime.now().strftime("%Y-%m-%d %I:%M %p")
+    )
+
+    db.session.add(task)
+    db.session.commit()
+
+    return redirect("/dashboard")
+
+
+@app.route("/delete-task/<int:id>")
+def delete_task(id):
+    if not login_required():
+        return redirect("/")
+
+    Task.query.filter_by(id=id).delete()
+    db.session.commit()
+
+    return redirect("/dashboard")
 
 
 # -----------------------------
