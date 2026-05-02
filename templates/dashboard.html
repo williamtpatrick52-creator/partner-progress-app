@@ -2,75 +2,150 @@
 <html>
 <head>
     <title>Dashboard</title>
+    <style>
+        body {
+            font-family: Arial;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        .top-bar {
+            margin-bottom: 20px;
+        }
+
+        .top-bar a {
+            margin-right: 10px;
+            text-decoration: none;
+            padding: 8px 12px;
+            background: #007bff;
+            color: white;
+            border-radius: 5px;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .left {
+            flex: 2;
+        }
+
+        .right {
+            flex: 1;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .project-link {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 5px 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        img, video {
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
 
 <h2>Welcome {{ username }}</h2>
 
-<a href="/add-project">+ Add Project</a> |
-<a href="/add-update">+ Add Update</a> |
-<a href="/logout">Logout</a>
+<div class="top-bar">
+    <a href="/add-project">+ Add Project</a>
+    <a href="/add-update">+ Add Update</a>
+    <a href="/logout">Logout</a>
+</div>
 
-<hr>
+<div class="container">
 
-<h3>Projects</h3>
+    <!-- LEFT SIDE -->
+    <div class="left">
 
-<ul>
-    {% for project in projects %}
-        <li>
-            <a href="/dashboard?project_id={{ project.id }}">
-                {{ project.icon }} {{ project.name }}
-            </a>
-        </li>
-    {% endfor %}
-</ul>
+        <div class="card">
+            <h3>Projects</h3>
 
-<hr>
+            {% for project in projects %}
+                <a class="project-link" href="/dashboard?project_id={{ project.id }}">
+                    {{ project.icon }} {{ project.name }}
+                </a>
+            {% endfor %}
+        </div>
 
-<h3>Updates</h3>
+        <div class="card">
+            <h3>Latest Updates</h3>
 
-{% if latest_updates %}
+            {% if latest_updates %}
 
-    {% for update in latest_updates %}
-        <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
+                {% for update in latest_updates %}
+                    <div class="card">
 
-            <strong>{{ update.project_icon }} {{ update.project_name }}</strong><br>
-            Status: {{ update.status }}<br>
-            By: {{ update.author }}<br>
-            {{ update.created_at }}<br><br>
+                        <strong>{{ update.project_icon }} {{ update.project_name }}</strong><br>
+                        Status: {{ update.status }}<br>
+                        By: {{ update.author }}<br>
+                        {{ update.created_at }}<br><br>
 
-            <p>{{ update.note }}</p>
+                        <p>{{ update.note }}</p>
 
-            <!-- 🔥 MULTI FILE DISPLAY -->
-            {% if update.files %}
-                <div>
-                    {% for file in update.files %}
+                        <!-- 🔥 MULTI FILE DISPLAY -->
+                        {% if update.files %}
+                            <div>
+                                {% for file in update.files %}
 
-                        {% if file.file_type == "image" %}
-                            <img src="/static/uploads/{{ file.file_url }}" width="200"><br>
+                                    {% if file.file_type == "image" %}
+                                        <img src="/static/uploads/{{ file.file_url }}" width="200"><br>
 
-                        {% elif file.file_type == "video" %}
-                            <video width="200" controls>
-                                <source src="/static/uploads/{{ file.file_url }}">
-                            </video><br>
+                                    {% elif file.file_type == "video" %}
+                                        <video width="200" controls>
+                                            <source src="/static/uploads/{{ file.file_url }}">
+                                        </video><br>
 
-                        {% else %}
-                            <a href="/static/uploads/{{ file.file_url }}" target="_blank">
-                                Download File
-                            </a><br>
+                                    {% else %}
+                                        <a href="/static/uploads/{{ file.file_url }}" target="_blank">
+                                            📎 Download File
+                                        </a><br>
 
+                                    {% endif %}
+
+                                {% endfor %}
+                            </div>
                         {% endif %}
 
-                    {% endfor %}
-                </div>
+                    </div>
+                {% endfor %}
+
+            {% else %}
+                <p>No updates found.</p>
             {% endif %}
-
         </div>
-    {% endfor %}
 
-{% else %}
-    <p>No updates found.</p>
-{% endif %}
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="right">
+        <h3>Priority List</h3>
+        <p>(We’ll wire this next)</p>
+    </div>
+
+</div>
 
 </body>
 </html>
