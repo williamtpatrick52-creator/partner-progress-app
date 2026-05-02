@@ -19,6 +19,8 @@ SUPABASE_BUCKET = "uploads"
 supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 
+# ================= MODELS =================
+
 class Project(db.Model):
     __tablename__ = "projects"
 
@@ -57,6 +59,8 @@ class Task(db.Model):
     created_at = db.Column(db.String(100))
 
 
+# ================= HELPERS =================
+
 def login_required():
     return "username" in session
 
@@ -74,32 +78,27 @@ def get_file_type(filename):
 
 
 def upload_file_to_supabase(file):
-    original_name = file.filename.replace(" ", "_")
-    storage_name = f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{original_name}"
+    name = file.filename.replace(" ", "_")
+    storage_name = f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{name}"
 
     file_bytes = file.read()
 
     supabase.storage.from_(SUPABASE_BUCKET).upload(
         storage_name,
         file_bytes,
-        {
-            "content-type": file.content_type
-        }
+        {"content-type": file.content_type}
     )
 
-    public_url = supabase.storage.from_(SUPABASE_BUCKET).get_public_url(storage_name)
+    return supabase.storage.from_(SUPABASE_BUCKET).get_public_url(storage_name)
 
-    return public_url
 
+# ================= ROUTES =================
 
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
-
-        if username:
-            session["username"] = username
-            return redirect("/dashboard")
+        session["username"] = request.form["username"]
+        return redirect("/dashboard")
 
     return render_template("login.html")
 
@@ -120,7 +119,6 @@ def dashboard():
     projects = Project.query.all()
 
     updates_query = Update.query
-
     if project_id:
         updates_query = updates_query.filter_by(project_id=project_id)
 
@@ -128,18 +126,18 @@ def dashboard():
 
     latest_updates = []
 
-    for update in updates:
-        project = Project.query.get(update.project_id)
-        files = UpdateFile.query.filter_by(update_id=update.id).all()
+    for u in updates:
+        project = Project.query.get(u.project_id)
+        files = UpdateFile.query.filter_by(update_id=u.id).all()
 
         latest_updates.append({
-            "id": update.id,
+            "id": u.id,
             "project_name": project.name if project else "Unknown",
             "project_icon": project.icon if project else "📁",
-            "status": update.status,
-            "author": update.author,
-            "note": update.note,
-            "created_at": update.created_at,
+            "status": u.status,
+            "author": u.author,
+            "note": u.note,
+            "created_at": u.created_at,
             "files": files
         })
 
@@ -152,26 +150,6 @@ def dashboard():
         latest_updates=latest_updates,
         tasks=tasks
     )
-
-
-@app.route("/add-project", methods=["GET", "POST"])
-def add_project():
-    if not login_required():
-        return redirect("/")
-
-    if request.method == "POST":
-        project = Project(
-            name=request.form["name"],
-            description=request.form.get("description"),
-            icon=request.form.get("icon", "📁")
-        )
-
-        db.session.add(project)
-        db.session.commit()
-
-        return redirect("/dashboard")
-
-    return render_template("add_project.html")
 
 
 @app.route("/add-update", methods=["GET", "POST"])
@@ -195,18 +173,16 @@ def add_update():
 
         files = request.files.getlist("files")
 
-        for file in files:
-            if file and file.filename:
-                file_url = upload_file_to_supabase(file)
-                file_type = get_file_type(file.filename)
+        for f in files:
+            if f and f.filename:
+                url = upload_file_to_supabase(f)
+                file_type = get_file_type(f.filename)
 
-                new_file = UpdateFile(
+                db.session.add(UpdateFile(
                     update_id=update.id,
-                    file_url=file_url,
+                    file_url=url,
                     file_type=file_type
-                )
-
-                db.session.add(new_file)
+                ))
 
         db.session.commit()
 
@@ -215,11 +191,42 @@ def add_update():
     return render_template("add_update.html", projects=projects)
 
 
-@app.route("/add-task", methods=["POST"])
-def add_task():
+# ================= EDIT UPDATE =================
+
+@app.route("/edit-update/<int:id>", methods=["GET", "POST"])
+def edit_update(id):
     if not login_required():
         return redirect("/")
 
+    update = Update.query.get_or_404(id)
+    projects = Project.query.all()
+
+    if request.method == "POST":
+        update.project_id = request.form["project_id"]
+        update.status = request.form["status"]
+        update.note = request.form["note"]
+
+        db.session.commit()
+
+        return redirect("/dashboard")
+
+    return render_template("edit_update.html", update=update, projects=projects)
+
+
+# ================= DELETE =================
+
+@app.route("/delete-update/<int:id>")
+def delete_update(id):
+    UpdateFile.query.filter_by(update_id=id).delete()
+    Update.query.filter_by(id=id).delete()
+    db.session.commit()
+    return redirect("/dashboard")
+
+
+# ================= TASKS =================
+
+@app.route("/add-task", methods=["POST"])
+def add_task():
     task = Task(
         text=request.form["text"],
         status=request.form["status"],
@@ -232,21 +239,22 @@ def add_task():
     return redirect("/dashboard")
 
 
-@app.route("/delete-task/<int:id>")
-def delete_task(id):
-    if not login_required():
-        return redirect("/")
-
-    Task.query.filter_by(id=id).delete()
+@app.route("/update-task/<int:id>/<status>")
+def update_task(id, status):
+    task = Task.query.get_or_404(id)
+    task.status = status
     db.session.commit()
-
     return redirect("/dashboard")
 
 
-@app.route("/init-db")
-def init_db():
-    return "Init DB is disabled in production."
+@app.route("/delete-task/<int:id>")
+def delete_task(id):
+    Task.query.filter_by(id=id).delete()
+    db.session.commit()
+    return redirect("/dashboard")
 
+
+# ================= RUN =================
 
 if __name__ == "__main__":
     app.run(debug=True)

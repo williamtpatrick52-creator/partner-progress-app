@@ -53,13 +53,16 @@
             border-radius: 10px;
             text-decoration: none;
             font-weight: bold;
-            margin-left: 8px;
+            margin: 6px 6px 0 0;
+            border: none;
+            cursor: pointer;
         }
 
         .btn-green { background: #008a22; color: white; }
-        .btn-blue { border: 1px solid #2563eb; color: #2563eb; }
+        .btn-blue { border: 1px solid #2563eb; color: #2563eb; background: white; }
         .btn-red { background: #dc3545; color: white; }
         .btn-yellow { background: #ffc107; color: black; }
+        .btn-dark { background: #07111f; color: white; }
 
         .project-pill {
             display: inline-block;
@@ -140,6 +143,14 @@
             opacity: 0.65;
         }
 
+        .task-actions {
+            margin-top: 10px;
+        }
+
+        .task-actions a {
+            font-size: 13px;
+        }
+
         @media (max-width: 900px) {
             .page {
                 grid-template-columns: 1fr;
@@ -147,11 +158,6 @@
 
             .top-card {
                 display: block;
-            }
-
-            .btn {
-                margin-top: 8px;
-                margin-left: 0;
             }
         }
     </style>
@@ -220,6 +226,10 @@
                                 {% endfor %}
                             </div>
                         {% endif %}
+
+                        <br>
+                        <a class="btn btn-yellow" href="/edit-update/{{ update.id }}">Edit Update</a>
+                        <a class="btn btn-red" href="/delete-update/{{ update.id }}">Delete Update</a>
                     </div>
                 {% endfor %}
             {% else %}
@@ -258,8 +268,12 @@
 
                     {{ task.text }}
 
-                    <br><br>
-                    <a class="btn btn-red" href="/delete-task/{{ task.id }}">Delete</a>
+                    <div class="task-actions">
+                        <a class="btn btn-green" href="/update-task/{{ task.id }}/done">Done</a>
+                        <a class="btn btn-yellow" href="/update-task/{{ task.id }}/pending">Pending</a>
+                        <a class="btn btn-dark" href="/update-task/{{ task.id }}/attention">Needs Attention</a>
+                        <a class="btn btn-red" href="/delete-task/{{ task.id }}">Delete</a>
+                    </div>
                 </div>
             {% endfor %}
         {% else %}
