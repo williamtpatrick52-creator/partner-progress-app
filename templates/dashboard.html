@@ -2,20 +2,57 @@
 <html>
 <head>
     <title>Dashboard</title>
+
     <style>
         body {
             font-family: Arial;
-            background-color: #f4f6f9;
+            background-color: #0f1115;
             margin: 0;
+            color: white;
+        }
+
+        /* 🔥 TOP BANNER */
+        .banner {
+            background: black;
+            color: white;
             padding: 20px;
+            font-size: 24px;
+            text-align: center;
+            letter-spacing: 2px;
+            animation: glow 2s infinite alternate;
         }
 
-        h2 {
-            margin-bottom: 10px;
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px white;
+            }
+            to {
+                text-shadow: 0 0 20px #00ffcc;
+            }
         }
 
-        .top-bar {
-            margin-bottom: 20px;
+        .container {
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .left {
+            flex: 2;
+        }
+
+        .right {
+            flex: 1;
+            background: #1a1d23;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .card {
+            background: #1a1d23;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
         }
 
         .top-bar a {
@@ -27,122 +64,184 @@
             border-radius: 5px;
         }
 
-        .container {
-            display: flex;
-            gap: 20px;
+        /* 🔥 TIMESTAMP STYLE */
+        .timestamp {
+            color: #39ff14;
+            text-shadow: 1px 1px 0 black, -1px -1px 0 black;
+            font-weight: bold;
         }
 
-        .left {
-            flex: 2;
-        }
-
-        .right {
-            flex: 1;
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-        }
-
-        .card {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
-
+        /* PROJECT BUTTON */
         .project-link {
             display: inline-block;
-            margin-right: 10px;
-            padding: 5px 10px;
-            background: #e9ecef;
+            margin: 5px;
+            padding: 6px 12px;
+            background: #2a2f36;
             border-radius: 5px;
             text-decoration: none;
+            color: white;
         }
 
         img, video {
             margin-top: 10px;
             border-radius: 5px;
         }
+
+        /* PRIORITY */
+        .priority-item {
+            margin-bottom: 10px;
+        }
+
+        .done {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .btn {
+            padding: 4px 8px;
+            margin-left: 5px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .edit-btn {
+            background: #ffc107;
+            color: black;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+
     </style>
 </head>
+
 <body>
 
-<h2>Welcome {{ username }}</h2>
-
-<div class="top-bar">
-    <a href="/add-project">+ Add Project</a>
-    <a href="/add-update">+ Add Update</a>
-    <a href="/logout">Logout</a>
+<!-- 🔥 HEADER -->
+<div class="banner">
+    Wallace & Williamson
 </div>
 
 <div class="container">
 
-    <!-- LEFT SIDE -->
+    <!-- LEFT -->
     <div class="left">
 
+        <div class="top-bar">
+            <a href="/add-project">+ Add Project</a>
+            <a href="/add-update">+ Add Update</a>
+            <a href="/logout">Logout</a>
+        </div>
+
+        <!-- PROJECTS -->
         <div class="card">
             <h3>Projects</h3>
 
             {% for project in projects %}
-                <a class="project-link" href="/dashboard?project_id={{ project.id }}">
-                    {{ project.icon }} {{ project.name }}
-                </a>
+                <div>
+                    <a class="project-link" href="/dashboard?project_id={{ project.id }}">
+                        {{ project.icon }} {{ project.name }}
+                    </a>
+
+                    <!-- 🔥 EDIT / DELETE -->
+                    <a class="btn edit-btn" href="/edit-project/{{ project.id }}">Edit</a>
+                    <a class="btn delete-btn" href="/delete-project/{{ project.id }}">Delete</a>
+                </div>
             {% endfor %}
         </div>
 
+        <!-- UPDATES -->
         <div class="card">
             <h3>Latest Updates</h3>
 
-            {% if latest_updates %}
+            {% for update in latest_updates %}
+                <div class="card">
 
-                {% for update in latest_updates %}
-                    <div class="card">
+                    <strong>{{ update.project_icon }} {{ update.project_name }}</strong><br>
+                    Status: {{ update.status }}<br>
+                    By: {{ update.author }}<br>
 
-                        <strong>{{ update.project_icon }} {{ update.project_name }}</strong><br>
-                        Status: {{ update.status }}<br>
-                        By: {{ update.author }}<br>
-                        {{ update.created_at }}<br><br>
+                    <span class="timestamp">
+                        {{ update.created_at }}
+                    </span><br><br>
 
-                        <p>{{ update.note }}</p>
+                    <p>{{ update.note }}</p>
 
-                        <!-- 🔥 MULTI FILE DISPLAY -->
-                        {% if update.files %}
-                            <div>
-                                {% for file in update.files %}
+                    <!-- 🔥 FILES -->
+                    {% if update.files %}
+                        {% for file in update.files %}
 
-                                    {% if file.file_type == "image" %}
-                                        <img src="/static/uploads/{{ file.file_url }}" width="200"><br>
+                            {% if file.file_type == "image" %}
+                                <img src="/static/uploads/{{ file.file_url }}" width="200"><br>
 
-                                    {% elif file.file_type == "video" %}
-                                        <video width="200" controls>
-                                            <source src="/static/uploads/{{ file.file_url }}">
-                                        </video><br>
+                            {% elif file.file_type == "video" %}
+                                <video width="200" controls>
+                                    <source src="/static/uploads/{{ file.file_url }}">
+                                </video><br>
 
-                                    {% else %}
-                                        <a href="/static/uploads/{{ file.file_url }}" target="_blank">
-                                            📎 Download File
-                                        </a><br>
+                            {% else %}
+                                <a href="/static/uploads/{{ file.file_url }}" target="_blank">
+                                    📎 Download
+                                </a><br>
+                            {% endif %}
 
-                                    {% endif %}
+                        {% endfor %}
+                    {% endif %}
 
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                    <!-- 🔥 EDIT / DELETE -->
+                    <br>
+                    <a class="btn edit-btn" href="/edit-update/{{ update.id }}">Edit</a>
+                    <a class="btn delete-btn" href="/delete-update/{{ update.id }}">Delete</a>
 
-                    </div>
-                {% endfor %}
+                </div>
+            {% endfor %}
 
-            {% else %}
-                <p>No updates found.</p>
-            {% endif %}
         </div>
 
     </div>
 
-    <!-- RIGHT SIDE -->
+    <!-- RIGHT -->
     <div class="right">
+
         <h3>Priority List</h3>
-        <p>(We’ll wire this next)</p>
+
+        <!-- ADD TASK -->
+        <form method="POST" action="/add-task">
+            <input name="text" placeholder="Add task..." required>
+            <select name="status">
+                <option value="attention">🚨 Needs Attention</option>
+                <option value="pending">⚠️ Pending</option>
+                <option value="done">✅ Done</option>
+            </select>
+            <button type="submit">Add</button>
+        </form>
+
+        <hr>
+
+        <!-- TASKS -->
+        {% for task in tasks %}
+            <div class="priority-item {% if task.status == 'done' %}done{% endif %}">
+
+                {% if task.status == "attention" %}
+                    🚨
+                {% elif task.status == "pending" %}
+                    ⚠️
+                {% elif task.status == "done" %}
+                    ✅
+                {% endif %}
+
+                {{ task.text }}
+
+                <!-- EDIT / DELETE -->
+                <a class="btn edit-btn" href="/edit-task/{{ task.id }}">Edit</a>
+                <a class="btn delete-btn" href="/delete-task/{{ task.id }}">Delete</a>
+
+            </div>
+        {% endfor %}
+
     </div>
 
 </div>
