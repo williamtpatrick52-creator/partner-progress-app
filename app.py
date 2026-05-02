@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, session
 from flask_sqlalchemy import SQLAlchemy
+from supabase import create_client
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev")
@@ -11,9 +12,12 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# -----------------------------
-# MODELS (FIXED TABLE NAMES)
-# -----------------------------
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
+SUPABASE_BUCKET = "uploads"
+
+supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
 
 class Project(db.Model):
     __tablename__ = "projects"
@@ -53,25 +57,47 @@ class Task(db.Model):
     created_at = db.Column(db.String(100))
 
 
-# -----------------------------
-# HELPERS
-# -----------------------------
-
 def login_required():
     return "username" in session
 
 
-# -----------------------------
-# ROUTES
-# -----------------------------
+def get_file_type(filename):
+    ext = filename.rsplit(".", 1)[-1].lower()
+
+    if ext in ["png", "jpg", "jpeg", "gif", "webp"]:
+        return "image"
+
+    if ext in ["mp4", "mov", "webm"]:
+        return "video"
+
+    return "document"
+
+
+def upload_file_to_supabase(file):
+    original_name = file.filename.replace(" ", "_")
+    storage_name = f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{original_name}"
+
+    file_bytes = file.read()
+
+    supabase.storage.from_(SUPABASE_BUCKET).upload(
+        storage_name,
+        file_bytes,
+        {
+            "content-type": file.content_type
+        }
+    )
+
+    public_url = supabase.storage.from_(SUPABASE_BUCKET).get_public_url(storage_name)
+
+    return public_url
+
 
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form["username"]
-        password = request.form["password"]
 
-        if username and password:
+        if username:
             session["username"] = username
             return redirect("/dashboard")
 
@@ -102,18 +128,18 @@ def dashboard():
 
     latest_updates = []
 
-    for u in updates:
-        project = Project.query.get(u.project_id)
-        files = UpdateFile.query.filter_by(update_id=u.id).all()
+    for update in updates:
+        project = Project.query.get(update.project_id)
+        files = UpdateFile.query.filter_by(update_id=update.id).all()
 
         latest_updates.append({
-            "id": u.id,
+            "id": update.id,
             "project_name": project.name if project else "Unknown",
             "project_icon": project.icon if project else "📁",
-            "status": u.status,
-            "author": u.author,
-            "note": u.note,
-            "created_at": u.created_at,
+            "status": update.status,
+            "author": update.author,
+            "note": update.note,
+            "created_at": update.created_at,
             "files": files
         })
 
@@ -127,10 +153,6 @@ def dashboard():
         tasks=tasks
     )
 
-
-# -----------------------------
-# ADD PROJECT
-# -----------------------------
 
 @app.route("/add-project", methods=["GET", "POST"])
 def add_project():
@@ -151,10 +173,6 @@ def add_project():
 
     return render_template("add_project.html")
 
-
-# -----------------------------
-# ADD UPDATE (MULTI FILE)
-# -----------------------------
 
 @app.route("/add-update", methods=["GET", "POST"])
 def add_update():
@@ -179,21 +197,12 @@ def add_update():
 
         for file in files:
             if file and file.filename:
-                filename = file.filename
-
-                path = os.path.join("static/uploads", filename)
-                file.save(path)
-
-                file_type = "file"
-
-                if filename.lower().endswith(("png","jpg","jpeg","gif")):
-                    file_type = "image"
-                elif filename.lower().endswith(("mp4","mov")):
-                    file_type = "video"
+                file_url = upload_file_to_supabase(file)
+                file_type = get_file_type(file.filename)
 
                 new_file = UpdateFile(
                     update_id=update.id,
-                    file_url=filename,
+                    file_url=file_url,
                     file_type=file_type
                 )
 
@@ -205,10 +214,6 @@ def add_update():
 
     return render_template("add_update.html", projects=projects)
 
-
-# -----------------------------
-# TASKS
-# -----------------------------
 
 @app.route("/add-task", methods=["POST"])
 def add_task():
@@ -238,9 +243,10 @@ def delete_task(id):
     return redirect("/dashboard")
 
 
-# -----------------------------
-# RUN
-# -----------------------------
+@app.route("/init-db")
+def init_db():
+    return "Init DB is disabled in production."
+
 
 if __name__ == "__main__":
     app.run(debug=True)
