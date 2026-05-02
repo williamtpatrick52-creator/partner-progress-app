@@ -1,40 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Add Update</title>
+    <title>Edit Update</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background-color: #0f1115;
+            color: white;
+            padding: 20px;
+        }
+
+        .card {
+            background: #1a1d23;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px;
+            background: #ffc107;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        a {
+            color: white;
+        }
+    </style>
 </head>
+
 <body>
 
-<h2>Add Update</h2>
+<h2>Edit Update</h2>
 
-<form method="POST" enctype="multipart/form-data">
+<div class="card">
 
-    <label>Project:</label><br>
-    <select name="project_id" required>
-        {% for project in projects %}
-            <option value="{{ project.id }}">{{ project.name }}</option>
+<form method="POST">
+
+    <label>Project</label>
+    <select name="project_id">
+        {% for p in projects %}
+            <option value="{{ p.id }}" {% if p.id == update.project_id %}selected{% endif %}>
+                {{ p.name }}
+            </option>
         {% endfor %}
     </select>
-    <br><br>
 
-    <label>Status:</label><br>
-    <input type="text" name="status" required>
-    <br><br>
+    <label>Status</label>
+    <input type="text" name="status" value="{{ update.status }}">
 
-    <label>Note:</label><br>
-    <textarea name="note" rows="4" cols="50"></textarea>
-    <br><br>
+    <label>Note</label>
+    <textarea name="note">{{ update.note }}</textarea>
 
-    <label>Upload Files (multiple allowed):</label><br>
-    <input type="file" name="attachments" multiple>
-    <br><br>
-
-    <button type="submit">Submit Update</button>
+    <button type="submit">Save Changes</button>
 
 </form>
 
+</div>
+
 <br>
-<a href="/dashboard">Back to Dashboard</a>
+<a href="/dashboard">← Back</a>
 
 </body>
 </html>
