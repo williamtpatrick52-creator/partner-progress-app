@@ -2,50 +2,39 @@
 <html>
 <head>
     <title>Add Update</title>
-    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<div class="app-shell">
 
-    <a class="back-link" href="/dashboard">← Back to Dashboard</a>
+<h2>Add Update</h2>
 
-    <header class="hero small-hero">
-        <div>
-            <p class="eyebrow">New Progress Note</p>
-            <h1>Add Update</h1>
-            <p class="subtitle">Log what changed today and attach an image, video, or document if needed.</p>
-        </div>
-    </header>
+<form method="POST" enctype="multipart/form-data">
 
-    <form class="form-card" method="POST" enctype="multipart/form-data">
-        <label>Project</label>
-        <select name="project_id" required>
-            {% for project in projects %}
-                <option value="{{ project.id }}">{{ project.icon }} {{ project.name }}</option>
-            {% endfor %}
-        </select>
+    <label>Project:</label><br>
+    <select name="project_id" required>
+        {% for project in projects %}
+            <option value="{{ project.id }}">{{ project.name }}</option>
+        {% endfor %}
+    </select>
+    <br><br>
 
-        <label>Status</label>
-        <select name="status" required>
-            <option>Not Started</option>
-            <option>In Progress</option>
-            <option>Blocked</option>
-            <option>Done</option>
-        </select>
+    <label>Status:</label><br>
+    <input type="text" name="status" required>
+    <br><br>
 
-        <label>Update</label>
-        <textarea name="note" placeholder="What progress did you make today?" required></textarea>
+    <label>Note:</label><br>
+    <textarea name="note" rows="4" cols="50"></textarea>
+    <br><br>
 
-        <label>Optional Attachment</label>
-        <input type="file" name="attachment" accept=".png,.jpg,.jpeg,.gif,.mp4,.mov,.webm,.pdf,.docx,.xlsx,.txt">
+    <label>Upload Files (multiple allowed):</label><br>
+    <input type="file" name="attachments" multiple>
+    <br><br>
 
-        <p class="hint">
-            Supported: images, videos, PDFs, Word docs, Excel files, and text files.
-        </p>
+    <button type="submit">Submit Update</button>
 
-        <button type="submit">Save Update</button>
-    </form>
+</form>
 
-</div>
+<br>
+<a href="/dashboard">Back to Dashboard</a>
+
 </body>
 </html>
