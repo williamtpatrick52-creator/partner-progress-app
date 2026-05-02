@@ -35,6 +35,9 @@ ALLOWED_EXTENSIONS = {
 }
 
 
+# -------------------------
+# MODELS
+# -------------------------
 class Project(db.Model):
     __tablename__ = "projects"
 
@@ -67,6 +70,17 @@ class Task(db.Model):
     created_at = db.Column(db.String(100), nullable=False)
 
 
+# -------------------------
+# SAFE INIT DB (DISABLED)
+# -------------------------
+@app.route("/init-db")
+def init_db():
+    return "Init DB is disabled in production. Contact admin if needed."
+
+
+# -------------------------
+# HELPERS
+# -------------------------
 def login_required():
     return "username" in session
 
@@ -116,12 +130,9 @@ def make_update_view(update, project):
     )
 
 
-@app.route("/init-db")
-def init_db():
-    db.create_all()
-    return "Database tables created successfully."
-
-
+# -------------------------
+# AUTH
+# -------------------------
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -137,6 +148,15 @@ def login():
     return render_template("login.html")
 
 
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+# -------------------------
+# DASHBOARD
+# -------------------------
 @app.route("/dashboard")
 def dashboard():
     if not login_required():
@@ -145,7 +165,6 @@ def dashboard():
     selected_project_id = request.args.get("project_id", type=int)
 
     projects = Project.query.order_by(Project.name).all()
-
     selected_project = None
 
     if selected_project_id:
@@ -191,21 +210,9 @@ def dashboard():
     )
 
 
-@app.route("/project/<int:project_id>")
-def project(project_id):
-    if not login_required():
-        return redirect(url_for("login"))
-
-    project = Project.query.get(project_id)
-
-    if project is None:
-        return redirect(url_for("dashboard"))
-
-    updates = Update.query.filter_by(project_id=project_id).order_by(Update.id.desc()).all()
-
-    return render_template("project.html", project=project, updates=updates)
-
-
+# -------------------------
+# PROJECTS
+# -------------------------
 @app.route("/add-project", methods=["GET", "POST"])
 def add_project():
     if not login_required():
@@ -261,6 +268,9 @@ def delete_project(project_id):
     return redirect(url_for("dashboard"))
 
 
+# -------------------------
+# UPDATES
+# -------------------------
 @app.route("/add-update", methods=["GET", "POST"])
 def add_update():
     if not login_required():
@@ -294,58 +304,23 @@ def add_update():
     return render_template("add_update.html", projects=projects)
 
 
-@app.route("/edit-update/<int:update_id>", methods=["GET", "POST"])
-def edit_update(update_id):
-    if not login_required():
-        return redirect(url_for("login"))
-
-    update = Update.query.get(update_id)
-    projects = Project.query.order_by(Project.name).all()
-
-    if update is None:
-        return redirect(url_for("dashboard"))
-
-    if request.method == "POST":
-        project_id = int(request.form["project_id"])
-
-        update.project_id = project_id
-        update.status = request.form["status"]
-        update.note = request.form["note"]
-
-        uploaded_file = request.files.get("attachment")
-        attachment = save_uploaded_file(uploaded_file)
-        attachment_type = get_file_type(attachment) if attachment else None
-
-        if attachment:
-            update.image = attachment if attachment_type == "image" else None
-            update.attachment = attachment
-            update.attachment_type = attachment_type
-
-        db.session.commit()
-
-        return redirect(url_for("dashboard", project_id=project_id))
-
-    return render_template("edit_update.html", update=update, projects=projects)
-
-
 @app.route("/delete-update/<int:update_id>", methods=["POST"])
 def delete_update(update_id):
     if not login_required():
         return redirect(url_for("login"))
 
     update = Update.query.get(update_id)
-    project_id = update.project_id if update else None
 
     if update:
         db.session.delete(update)
         db.session.commit()
 
-    if project_id:
-        return redirect(url_for("dashboard", project_id=project_id))
-
     return redirect(url_for("dashboard"))
 
 
+# -------------------------
+# TASKS
+# -------------------------
 @app.route("/add-task", methods=["POST"])
 def add_task():
     if not login_required():
@@ -363,50 +338,10 @@ def add_task():
     return redirect(url_for("dashboard"))
 
 
-@app.route("/edit-task/<int:task_id>", methods=["GET", "POST"])
-def edit_task(task_id):
-    if not login_required():
-        return redirect(url_for("login"))
-
-    task = Task.query.get(task_id)
-
-    if task is None:
-        return redirect(url_for("dashboard"))
-
-    if request.method == "POST":
-        task.text = request.form["text"]
-        task.status = request.form["status"]
-
-        db.session.commit()
-
-        return redirect(url_for("dashboard"))
-
-    return render_template("edit_task.html", task=task)
-
-
-@app.route("/delete-task/<int:task_id>", methods=["POST"])
-def delete_task(task_id):
-    if not login_required():
-        return redirect(url_for("login"))
-
-    task = Task.query.get(task_id)
-
-    if task:
-        db.session.delete(task)
-        db.session.commit()
-
-    return redirect(url_for("dashboard"))
-
-
 @app.route("/set-task-status/<int:task_id>/<status>", methods=["POST"])
 def set_task_status(task_id, status):
     if not login_required():
         return redirect(url_for("login"))
-
-    allowed_statuses = ["Needs Attention", "Pending", "Possible", "Done"]
-
-    if status not in allowed_statuses:
-        return redirect(url_for("dashboard"))
 
     task = Task.query.get(task_id)
 
@@ -415,12 +350,6 @@ def set_task_status(task_id, status):
         db.session.commit()
 
     return redirect(url_for("dashboard"))
-
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("login"))
 
 
 if __name__ == "__main__":
