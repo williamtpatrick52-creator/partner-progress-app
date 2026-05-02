@@ -1,238 +1,148 @@
 <!DOCTYPE html>
+
 <html>
 <head>
     <title>Dashboard</title>
-
     <style>
         body {
-            font-family: Arial;
-            background-color: #0f1115;
+            font-family: Arial, sans-serif;
+            background: #0f1115;
+            color: white;
             margin: 0;
-            color: white;
         }
 
-        /* 🔥 TOP BANNER */
-        .banner {
-            background: black;
-            color: white;
-            padding: 20px;
-            font-size: 24px;
-            text-align: center;
-            letter-spacing: 2px;
-            animation: glow 2s infinite alternate;
-        }
+```
+    .banner {
+        background: black;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        font-size: 26px;
+        letter-spacing: 2px;
+        animation: glow 2s infinite alternate;
+    }
 
-        @keyframes glow {
-            from { text-shadow: 0 0 5px white; }
-            to { text-shadow: 0 0 20px #00ffcc; }
-        }
+    @keyframes glow {
+        from { text-shadow: 0 0 5px white; }
+        to { text-shadow: 0 0 15px #00ffcc; }
+    }
 
-        .container {
-            padding: 20px;
-            display: flex;
-            gap: 20px;
-        }
+    .container {
+        padding: 25px;
+    }
 
-        .left { flex: 2; }
+    .update-card {
+        background: #1a1d23;
+        padding: 15px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
 
-        .right {
-            flex: 1;
-            background: #1a1d23;
-            padding: 15px;
-            border-radius: 10px;
-        }
+    .timestamp {
+        color: #00ff00;
+        text-shadow: 1px 1px 0 black;
+        font-weight: bold;
+    }
 
-        .card {
-            background: #1a1d23;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
+    img, video {
+        margin-top: 10px;
+        border-radius: 8px;
+    }
 
-        .top-bar a {
-            margin-right: 10px;
-            text-decoration: none;
-            padding: 8px 12px;
-            background: #007bff;
-            color: white;
-            border-radius: 5px;
-        }
+    .btn {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        margin-right: 5px;
+    }
 
-        /* 🔥 TIMESTAMP */
-        .timestamp {
-            color: #39ff14;
-            text-shadow: 1px 1px 0 black, -1px -1px 0 black;
-            font-weight: bold;
-        }
+    .edit {
+        background: orange;
+    }
 
-        .project-link {
-            display: inline-block;
-            margin: 5px;
-            padding: 6px 12px;
-            background: #2a2f36;
-            border-radius: 5px;
-            text-decoration: none;
-            color: white;
-        }
+    .delete {
+        background: red;
+        color: white;
+    }
 
-        img, video {
-            margin-top: 10px;
-            border-radius: 5px;
-        }
+    a {
+        color: #00ffcc;
+    }
+</style>
+```
 
-        .priority-item {
-            margin-bottom: 10px;
-        }
-
-        .done {
-            text-decoration: line-through;
-            opacity: 0.6;
-        }
-
-        .btn {
-            padding: 4px 8px;
-            margin-left: 5px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 12px;
-        }
-
-        .edit-btn {
-            background: #ffc107;
-            color: black;
-        }
-
-        .delete-btn {
-            background: #dc3545;
-            color: white;
-        }
-
-    </style>
 </head>
-
 <body>
 
-<!-- 🔥 HEADER -->
-<div class="banner">
-    Wallace & Williamson
-</div>
+<div class="banner">Wallace & Williamson</div>
 
 <div class="container">
 
-    <!-- LEFT -->
-    <div class="left">
+<h2>Welcome {{ username }}</h2>
 
-        <div class="top-bar">
-            <a href="/add-project">+ Add Project</a>
-            <a href="/add-update">+ Add Update</a>
-            <a href="/logout">Logout</a>
-        </div>
+<a href="/add-project">+ Add Project</a> | <a href="/add-update">+ Add Update</a> | <a href="/logout">Logout</a>
 
-        <!-- PROJECTS -->
-        <div class="card">
-            <h3>Projects</h3>
+<hr>
 
-            {% for project in projects %}
-                <div>
-                    <a class="project-link" href="/dashboard?project_id={{ project.id }}">
-                        {{ project.icon }} {{ project.name }}
-                    </a>
+<h3>Projects</h3>
+<ul>
+    {% for project in projects %}
+        <li>
+            <a href="/dashboard?project_id={{ project.id }}">
+                {{ project.icon }} {{ project.name }}
+            </a>
+        </li>
+    {% endfor %}
+</ul>
 
-                    <a class="btn edit-btn" href="/edit-project/{{ project.id }}">Edit</a>
-                    <a class="btn delete-btn" href="/delete-project/{{ project.id }}">Delete</a>
-                </div>
-            {% endfor %}
-        </div>
+<hr>
 
-        <!-- UPDATES -->
-        <div class="card">
-            <h3>Latest Updates</h3>
+<h3>Latest Updates</h3>
 
-            {% for update in latest_updates %}
-                <div class="card">
+{% if latest_updates %}
 
-                    <strong>{{ update.project_icon }} {{ update.project_name }}</strong><br>
-                    Status: {{ update.status }}<br>
-                    By: {{ update.author }}<br>
+```
+{% for update in latest_updates %}
+    <div class="update-card">
 
-                    <span class="timestamp">
-                        {{ update.created_at }}
-                    </span><br><br>
+        <strong>{{ update.project_icon }} {{ update.project_name }}</strong><br>
+        Status: {{ update.status }}<br>
+        By: {{ update.author }}<br>
+        <span class="timestamp">{{ update.created_at }}</span><br><br>
 
-                    <p>{{ update.note }}</p>
+        <p>{{ update.note }}</p>
 
-                    <!-- 🔥 SUPABASE FILE DISPLAY -->
-                    {% if update.files %}
-                        {% for file in update.files %}
+        {% if update.files %}
+            {% for file in update.files %}
 
-                            {% if file.file_type == "image" %}
-                                <img src="{{ file.file_url }}" width="200"><br>
+                {% if file.file_type == "image" %}
+                    <img src="{{ file.file_url }}" width="250"><br>
 
-                            {% elif file.file_type == "video" %}
-                                <video width="200" controls>
-                                    <source src="{{ file.file_url }}">
-                                </video><br>
+                {% elif file.file_type == "video" %}
+                    <video width="250" controls>
+                        <source src="{{ file.file_url }}">
+                    </video><br>
 
-                            {% else %}
-                                <a href="{{ file.file_url }}" target="_blank">
-                                    📎 Download File
-                                </a><br>
+                {% else %}
+                    <a href="{{ file.file_url }}" target="_blank">Download File</a><br>
 
-                            {% endif %}
-
-                        {% endfor %}
-                    {% endif %}
-
-                    <br>
-                    <a class="btn edit-btn" href="/edit-update/{{ update.id }}">Edit</a>
-                    <a class="btn delete-btn" href="/delete-update/{{ update.id }}">Delete</a>
-
-                </div>
-            {% endfor %}
-
-        </div>
-
-    </div>
-
-    <!-- RIGHT -->
-    <div class="right">
-
-        <h3>Priority List</h3>
-
-        <form method="POST" action="/add-task">
-            <input name="text" placeholder="Add task..." required>
-            <select name="status">
-                <option value="attention">🚨 Needs Attention</option>
-                <option value="pending">⚠️ Pending</option>
-                <option value="done">✅ Done</option>
-            </select>
-            <button type="submit">Add</button>
-        </form>
-
-        <hr>
-
-        {% for task in tasks %}
-            <div class="priority-item {% if task.status == 'done' %}done{% endif %}">
-
-                {% if task.status == "attention" %}
-                    🚨
-                {% elif task.status == "pending" %}
-                    ⚠️
-                {% elif task.status == "done" %}
-                    ✅
                 {% endif %}
 
-                {{ task.text }}
+            {% endfor %}
+        {% endif %}
 
-                <a class="btn edit-btn" href="/edit-task/{{ task.id }}">Edit</a>
-                <a class="btn delete-btn" href="/delete-task/{{ task.id }}">Delete</a>
-
-            </div>
-        {% endfor %}
+        <br>
+        <button class="btn edit">Edit</button>
+        <button class="btn delete">Delete</button>
 
     </div>
+{% endfor %}
+```
+
+{% else %} <p>No updates found.</p>
+{% endif %}
 
 </div>
-
 </body>
 </html>
