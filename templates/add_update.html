@@ -1,74 +1,118 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Edit Update</title>
-
+    <title>Add Update</title>
     <style>
         body {
-            font-family: Arial;
-            background-color: #0f1115;
+            font-family: Arial, sans-serif;
+            background: #0f1115;
             color: white;
-            padding: 20px;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .banner {
+            background: black;
+            color: white;
+            padding: 18px;
+            text-align: center;
+            font-size: 26px;
+            letter-spacing: 2px;
+            animation: glow 2s infinite alternate;
+            margin: -30px -30px 30px -30px;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 5px white; }
+            to { text-shadow: 0 0 18px #00ffcc; }
         }
 
         .card {
             background: #1a1d23;
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 500px;
+            max-width: 650px;
+            padding: 25px;
+            border-radius: 14px;
+            margin: auto;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 6px;
+            font-weight: bold;
         }
 
         input, textarea, select {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
             margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            min-height: 130px;
         }
 
         button {
-            padding: 10px;
-            background: #ffc107;
+            background: #00a63f;
+            color: white;
             border: none;
-            border-radius: 5px;
+            padding: 12px 18px;
+            border-radius: 8px;
             cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
         }
 
         a {
-            color: white;
+            color: #00ffcc;
+            text-decoration: none;
+        }
+
+        .hint {
+            color: #c8c8c8;
+            font-size: 14px;
         }
     </style>
 </head>
-
 <body>
 
-<h2>Edit Update</h2>
+<div class="banner">Wallace & Williamson</div>
 
 <div class="card">
+    <h1>Add Update</h1>
 
-<form method="POST">
+    <form method="POST" enctype="multipart/form-data">
+        <label>Project</label>
+        <select name="project_id" required>
+            {% for project in projects %}
+                <option value="{{ project.id }}">{{ project.icon }} {{ project.name }}</option>
+            {% endfor %}
+        </select>
 
-    <label>Project</label>
-    <select name="project_id">
-        {% for p in projects %}
-            <option value="{{ p.id }}" {% if p.id == update.project_id %}selected{% endif %}>
-                {{ p.name }}
-            </option>
-        {% endfor %}
-    </select>
+        <label>Status</label>
+        <select name="status" required>
+            <option value="In Progress">In Progress</option>
+            <option value="Needs Attention">Needs Attention</option>
+            <option value="Pending">Pending</option>
+            <option value="Done">Done</option>
+        </select>
 
-    <label>Status</label>
-    <input type="text" name="status" value="{{ update.status }}">
+        <label>Update Note</label>
+        <textarea name="note" placeholder="Write your update here..." required></textarea>
 
-    <label>Note</label>
-    <textarea name="note">{{ update.note }}</textarea>
+        <label>Upload Files</label>
+        <input type="file" name="files" multiple>
+        <div class="hint">You can select multiple images, videos, or documents.</div>
 
-    <button type="submit">Save Changes</button>
+        <button type="submit">Save Update</button>
+    </form>
 
-</form>
-
+    <br>
+    <a href="/dashboard">← Back to Dashboard</a>
 </div>
-
-<br>
-<a href="/dashboard">← Back</a>
 
 </body>
 </html>
