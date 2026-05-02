@@ -2,64 +2,40 @@
 <html>
 <head>
     <title>Edit Project</title>
-
     <style>
-        body {
-            font-family: Arial;
-            background-color: #0f1115;
-            color: white;
-            padding: 20px;
-        }
-
-        .card {
-            background: #1a1d23;
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 500px;
-        }
-
-        input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-        }
-
-        button {
-            padding: 10px;
-            background: #ffc107;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        a {
-            color: white;
-        }
+        body { font-family: Arial, sans-serif; background: #eef3f8; padding: 30px; }
+        .card { background: white; max-width: 600px; margin: auto; padding: 25px; border-radius: 18px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+        input, textarea, button { width: 100%; padding: 12px; margin-bottom: 14px; border-radius: 10px; border: 1px solid #cfd7e3; box-sizing: border-box; }
+        button { font-weight: bold; cursor: pointer; }
+        .save { background: #008a22; color: white; }
+        .delete { background: #dc3545; color: white; }
+        a { color: #2563eb; font-weight: bold; }
     </style>
 </head>
-
 <body>
 
-<h2>Edit Project</h2>
-
 <div class="card">
+    <h1>Edit Project</h1>
 
-<form method="POST">
+    <form method="POST">
+        <label>Project Name</label>
+        <input type="text" name="name" value="{{ project.name }}" required>
 
-    <label>Project Name</label>
-    <input type="text" name="name" value="{{ project.name }}" required>
+        <label>Description</label>
+        <textarea name="description">{{ project.description }}</textarea>
 
-    <label>Icon</label>
-    <input type="text" name="icon" value="{{ project.icon }}">
+        <label>Icon / Emoji</label>
+        <input type="text" name="icon" value="{{ project.icon }}">
 
-    <button type="submit">Save Changes</button>
+        <button class="save" type="submit">Save Project</button>
+    </form>
 
-</form>
+    <form method="POST" action="/delete-project/{{ project.id }}" onsubmit="return confirm('Delete this project and its updates?');">
+        <button class="delete" type="submit">Delete Project</button>
+    </form>
 
+    <a href="/dashboard">← Back to Dashboard</a>
 </div>
-
-<br>
-<a href="/dashboard">← Back</a>
 
 </body>
 </html>

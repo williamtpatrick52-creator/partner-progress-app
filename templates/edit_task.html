@@ -1,69 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Edit Task</title>
-
+    <title>Edit Priority Item</title>
     <style>
-        body {
-            font-family: Arial;
-            background-color: #0f1115;
-            color: white;
-            padding: 20px;
-        }
-
-        .card {
-            background: #1a1d23;
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 500px;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-        }
-
-        button {
-            padding: 10px;
-            background: #ffc107;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        a {
-            color: white;
-        }
+        body { font-family: Arial, sans-serif; background: #eef3f8; padding: 30px; }
+        .card { background: white; max-width: 600px; margin: auto; padding: 25px; border-radius: 18px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+        input, select, button { width: 100%; padding: 12px; margin-bottom: 14px; border-radius: 10px; border: 1px solid #cfd7e3; box-sizing: border-box; }
+        button { font-weight: bold; cursor: pointer; }
+        .save { background: #008a22; color: white; }
+        .delete { background: #dc3545; color: white; }
+        a { color: #2563eb; font-weight: bold; }
     </style>
 </head>
-
 <body>
 
-<h2>Edit Task</h2>
-
 <div class="card">
+    <h1>Edit Priority Item</h1>
 
-<form method="POST">
+    <form method="POST">
+        <label>Task</label>
+        <input type="text" name="text" value="{{ task.text }}" required>
 
-    <label>Task</label>
-    <input type="text" name="text" value="{{ task.text }}">
+        <label>Status</label>
+        <select name="status">
+            <option value="attention" {% if task.status == "attention" %}selected{% endif %}>❗ Needs Attention</option>
+            <option value="pending" {% if task.status == "pending" %}selected{% endif %}>⚠️ Pending</option>
+            <option value="done" {% if task.status == "done" %}selected{% endif %}>✅ Done</option>
+        </select>
 
-    <label>Status</label>
-    <select name="status">
-        <option value="attention" {% if task.status == "attention" %}selected{% endif %}>🚨 Needs Attention</option>
-        <option value="pending" {% if task.status == "pending" %}selected{% endif %}>⚠️ Pending</option>
-        <option value="done" {% if task.status == "done" %}selected{% endif %}>✅ Done</option>
-    </select>
+        <button class="save" type="submit">Save Priority Item</button>
+    </form>
 
-    <button type="submit">Save Changes</button>
+    <form method="POST" action="/delete-task/{{ task.id }}" onsubmit="return confirm('Delete this priority item?');">
+        <button class="delete" type="submit">Delete Priority Item</button>
+    </form>
 
-</form>
-
+    <a href="/dashboard">← Back to Dashboard</a>
 </div>
-
-<br>
-<a href="/dashboard">← Back</a>
 
 </body>
 </html>
