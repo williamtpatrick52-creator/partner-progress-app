@@ -23,12 +23,8 @@
         }
 
         @keyframes glow {
-            from {
-                text-shadow: 0 0 5px white;
-            }
-            to {
-                text-shadow: 0 0 20px #00ffcc;
-            }
+            from { text-shadow: 0 0 5px white; }
+            to { text-shadow: 0 0 20px #00ffcc; }
         }
 
         .container {
@@ -37,9 +33,7 @@
             gap: 20px;
         }
 
-        .left {
-            flex: 2;
-        }
+        .left { flex: 2; }
 
         .right {
             flex: 1;
@@ -64,14 +58,13 @@
             border-radius: 5px;
         }
 
-        /* 🔥 TIMESTAMP STYLE */
+        /* 🔥 TIMESTAMP */
         .timestamp {
             color: #39ff14;
             text-shadow: 1px 1px 0 black, -1px -1px 0 black;
             font-weight: bold;
         }
 
-        /* PROJECT BUTTON */
         .project-link {
             display: inline-block;
             margin: 5px;
@@ -87,7 +80,6 @@
             border-radius: 5px;
         }
 
-        /* PRIORITY */
         .priority-item {
             margin-bottom: 10px;
         }
@@ -146,7 +138,6 @@
                         {{ project.icon }} {{ project.name }}
                     </a>
 
-                    <!-- 🔥 EDIT / DELETE -->
                     <a class="btn edit-btn" href="/edit-project/{{ project.id }}">Edit</a>
                     <a class="btn delete-btn" href="/delete-project/{{ project.id }}">Delete</a>
                 </div>
@@ -170,28 +161,28 @@
 
                     <p>{{ update.note }}</p>
 
-                    <!-- 🔥 FILES -->
+                    <!-- 🔥 SUPABASE FILE DISPLAY -->
                     {% if update.files %}
                         {% for file in update.files %}
 
                             {% if file.file_type == "image" %}
-                                <img src="/static/uploads/{{ file.file_url }}" width="200"><br>
+                                <img src="{{ file.file_url }}" width="200"><br>
 
                             {% elif file.file_type == "video" %}
                                 <video width="200" controls>
-                                    <source src="/static/uploads/{{ file.file_url }}">
+                                    <source src="{{ file.file_url }}">
                                 </video><br>
 
                             {% else %}
-                                <a href="/static/uploads/{{ file.file_url }}" target="_blank">
-                                    📎 Download
+                                <a href="{{ file.file_url }}" target="_blank">
+                                    📎 Download File
                                 </a><br>
+
                             {% endif %}
 
                         {% endfor %}
                     {% endif %}
 
-                    <!-- 🔥 EDIT / DELETE -->
                     <br>
                     <a class="btn edit-btn" href="/edit-update/{{ update.id }}">Edit</a>
                     <a class="btn delete-btn" href="/delete-update/{{ update.id }}">Delete</a>
@@ -208,7 +199,6 @@
 
         <h3>Priority List</h3>
 
-        <!-- ADD TASK -->
         <form method="POST" action="/add-task">
             <input name="text" placeholder="Add task..." required>
             <select name="status">
@@ -221,7 +211,6 @@
 
         <hr>
 
-        <!-- TASKS -->
         {% for task in tasks %}
             <div class="priority-item {% if task.status == 'done' %}done{% endif %}">
 
@@ -235,7 +224,6 @@
 
                 {{ task.text }}
 
-                <!-- EDIT / DELETE -->
                 <a class="btn edit-btn" href="/edit-task/{{ task.id }}">Edit</a>
                 <a class="btn delete-btn" href="/delete-task/{{ task.id }}">Delete</a>
 
