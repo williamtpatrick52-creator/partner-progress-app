@@ -1,148 +1,273 @@
 <!DOCTYPE html>
-
 <html>
 <head>
-    <title>Dashboard</title>
+    <title>Wallace & Williamson Dashboard</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: #0f1115;
-            color: white;
             margin: 0;
+            font-family: Arial, sans-serif;
+            background: #eef3f8;
+            color: #07111f;
         }
 
-```
-    .banner {
-        background: black;
-        color: white;
-        padding: 20px;
-        text-align: center;
-        font-size: 26px;
-        letter-spacing: 2px;
-        animation: glow 2s infinite alternate;
-    }
+        .banner {
+            background: #000;
+            color: #fff;
+            padding: 22px;
+            text-align: center;
+            font-size: 30px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            animation: glow 2s infinite alternate;
+        }
 
-    @keyframes glow {
-        from { text-shadow: 0 0 5px white; }
-        to { text-shadow: 0 0 15px #00ffcc; }
-    }
+        @keyframes glow {
+            from { text-shadow: 0 0 5px #ffffff; }
+            to { text-shadow: 0 0 18px #00ffcc, 0 0 30px #00ffcc; }
+        }
 
-    .container {
-        padding: 25px;
-    }
+        .page {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 26px;
+            padding: 28px;
+        }
 
-    .update-card {
-        background: #1a1d23;
-        padding: 15px;
-        border-radius: 12px;
-        margin-bottom: 20px;
-    }
+        .top-card, .card, .sidebar {
+            background: white;
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        }
 
-    .timestamp {
-        color: #00ff00;
-        text-shadow: 1px 1px 0 black;
-        font-weight: bold;
-    }
+        .top-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
 
-    img, video {
-        margin-top: 10px;
-        border-radius: 8px;
-    }
+        .btn {
+            display: inline-block;
+            padding: 10px 16px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-left: 8px;
+        }
 
-    .btn {
-        padding: 8px 12px;
-        border-radius: 6px;
-        border: none;
-        cursor: pointer;
-        margin-right: 5px;
-    }
+        .btn-green { background: #008a22; color: white; }
+        .btn-blue { border: 1px solid #2563eb; color: #2563eb; }
+        .btn-red { background: #dc3545; color: white; }
+        .btn-yellow { background: #ffc107; color: black; }
 
-    .edit {
-        background: orange;
-    }
+        .project-pill {
+            display: inline-block;
+            padding: 9px 14px;
+            border-radius: 999px;
+            background: #f7f9fc;
+            border: 1px solid #d4dbe6;
+            text-decoration: none;
+            color: #07111f;
+            margin: 6px 8px 6px 0;
+            font-weight: bold;
+        }
 
-    .delete {
-        background: red;
-        color: white;
-    }
+        .update-card {
+            background: #f9fbff;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 18px;
+            border: 1px solid #e1e7f0;
+        }
 
-    a {
-        color: #00ffcc;
-    }
-</style>
-```
+        .timestamp {
+            color: #39ff14;
+            text-shadow:
+                -1px -1px 0 #000,
+                 1px -1px 0 #000,
+                -1px  1px 0 #000,
+                 1px  1px 0 #000;
+            font-weight: bold;
+            font-size: 18px;
+        }
 
+        .file-preview img,
+        .file-preview video {
+            max-width: 320px;
+            width: 100%;
+            border-radius: 12px;
+            margin-top: 14px;
+            display: block;
+        }
+
+        .file-preview a {
+            display: inline-block;
+            margin-top: 12px;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .task-form input,
+        .task-form select,
+        .task-form button {
+            width: 100%;
+            padding: 11px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border: 1px solid #cfd7e3;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+
+        .task-form button {
+            background: #07111f;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .task-item {
+            padding: 12px;
+            background: #f7f9fc;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #e1e7f0;
+        }
+
+        .done {
+            text-decoration: line-through;
+            opacity: 0.65;
+        }
+
+        @media (max-width: 900px) {
+            .page {
+                grid-template-columns: 1fr;
+            }
+
+            .top-card {
+                display: block;
+            }
+
+            .btn {
+                margin-top: 8px;
+                margin-left: 0;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
 <div class="banner">Wallace & Williamson</div>
 
-<div class="container">
+<div class="page">
 
-<h2>Welcome {{ username }}</h2>
+    <main>
+        <div class="top-card">
+            <div>
+                <strong>Logged in as {{ username }}</strong>
+            </div>
+            <div>
+                <a class="btn btn-green" href="/add-update">+ Add Update</a>
+                <a class="btn btn-blue" href="/add-project">+ Add Project</a>
+                <a class="btn btn-red" href="/logout">Logout</a>
+            </div>
+        </div>
 
-<a href="/add-project">+ Add Project</a> | <a href="/add-update">+ Add Update</a> | <a href="/logout">Logout</a>
+        <section class="card">
+            <h2>Projects</h2>
 
-<hr>
+            <a class="project-pill" href="/dashboard">All Updates</a>
 
-<h3>Projects</h3>
-<ul>
-    {% for project in projects %}
-        <li>
-            <a href="/dashboard?project_id={{ project.id }}">
-                {{ project.icon }} {{ project.name }}
-            </a>
-        </li>
-    {% endfor %}
-</ul>
-
-<hr>
-
-<h3>Latest Updates</h3>
-
-{% if latest_updates %}
-
-```
-{% for update in latest_updates %}
-    <div class="update-card">
-
-        <strong>{{ update.project_icon }} {{ update.project_name }}</strong><br>
-        Status: {{ update.status }}<br>
-        By: {{ update.author }}<br>
-        <span class="timestamp">{{ update.created_at }}</span><br><br>
-
-        <p>{{ update.note }}</p>
-
-        {% if update.files %}
-            {% for file in update.files %}
-
-                {% if file.file_type == "image" %}
-                    <img src="{{ file.file_url }}" width="250"><br>
-
-                {% elif file.file_type == "video" %}
-                    <video width="250" controls>
-                        <source src="{{ file.file_url }}">
-                    </video><br>
-
-                {% else %}
-                    <a href="{{ file.file_url }}" target="_blank">Download File</a><br>
-
-                {% endif %}
-
+            {% for project in projects %}
+                <a class="project-pill" href="/dashboard?project_id={{ project.id }}">
+                    {{ project.icon }} {{ project.name }}
+                </a>
             {% endfor %}
+        </section>
+
+        <section class="card">
+            <h2>Latest Updates</h2>
+
+            {% if latest_updates %}
+                {% for update in latest_updates %}
+                    <div class="update-card">
+                        <h3>{{ update.project_icon }} {{ update.project_name }}</h3>
+
+                        <p><strong>Status:</strong> {{ update.status }}</p>
+                        <p><strong>By:</strong> {{ update.author }}</p>
+                        <p class="timestamp">{{ update.created_at }}</p>
+
+                        <p>{{ update.note }}</p>
+
+                        {% if update.files %}
+                            <div class="file-preview">
+                                {% for file in update.files %}
+
+                                    {% if file.file_type == "image" %}
+                                        <img src="{{ file.file_url }}" alt="Uploaded image">
+
+                                    {% elif file.file_type == "video" %}
+                                        <video controls>
+                                            <source src="{{ file.file_url }}">
+                                        </video>
+
+                                    {% else %}
+                                        <a href="{{ file.file_url }}" target="_blank">📎 Download File</a>
+                                    {% endif %}
+
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No updates found for this view.</p>
+            {% endif %}
+        </section>
+    </main>
+
+    <aside class="sidebar">
+        <h2>Priority List</h2>
+
+        <form class="task-form" method="POST" action="/add-task">
+            <input name="text" placeholder="Add task..." required>
+
+            <select name="status">
+                <option value="attention">❗ Needs Attention</option>
+                <option value="pending">⚠️ Pending</option>
+                <option value="done">✅ Done</option>
+            </select>
+
+            <button type="submit">Add</button>
+        </form>
+
+        <hr>
+
+        {% if tasks %}
+            {% for task in tasks %}
+                <div class="task-item {% if task.status == 'done' %}done{% endif %}">
+                    {% if task.status == "attention" %}
+                        ❗
+                    {% elif task.status == "pending" %}
+                        ⚠️
+                    {% elif task.status == "done" %}
+                        ✅
+                    {% endif %}
+
+                    {{ task.text }}
+
+                    <br><br>
+                    <a class="btn btn-red" href="/delete-task/{{ task.id }}">Delete</a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No tasks yet.</p>
         {% endif %}
-
-        <br>
-        <button class="btn edit">Edit</button>
-        <button class="btn delete">Delete</button>
-
-    </div>
-{% endfor %}
-```
-
-{% else %} <p>No updates found.</p>
-{% endif %}
+    </aside>
 
 </div>
+
 </body>
 </html>
