@@ -3,6 +3,7 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, session
 from flask_sqlalchemy import SQLAlchemy
 from supabase import create_client
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev")
@@ -17,6 +18,11 @@ SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
 SUPABASE_BUCKET = "uploads"
 
 supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+USERS = {
+    "tj": generate_password_hash("Adidas40!"),
+    "ryan": generate_password_hash("Adidas40!")
+}
 
 
 class Project(db.Model):
@@ -89,8 +95,14 @@ def upload_file_to_supabase(file):
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        session["username"] = request.form["username"]
-        return redirect("/dashboard")
+        username = request.form["username"].lower().strip()
+        password = request.form["password"]
+
+        if username in USERS and check_password_hash(USERS[username], password):
+            session["username"] = username
+            return redirect("/dashboard")
+
+        return render_template("login.html", error="Invalid username or password.")
 
     return render_template("login.html")
 
@@ -155,8 +167,10 @@ def add_project():
             description=request.form.get("description", ""),
             icon=request.form.get("icon", "📁")
         )
+
         db.session.add(project)
         db.session.commit()
+
         return redirect("/dashboard")
 
     return render_template("add_project.html")
@@ -173,13 +187,15 @@ def edit_project(id):
         project.name = request.form["name"]
         project.description = request.form.get("description", "")
         project.icon = request.form.get("icon", "📁")
+
         db.session.commit()
+
         return redirect("/dashboard")
 
     return render_template("edit_project.html", project=project)
 
 
-@app.route("/delete-project/<int:id>", methods=["POST"])
+@app.route("/delete-project/<int:id>", methods=["POST", "GET"])
 def delete_project(id):
     if not login_required():
         return redirect("/")
@@ -191,6 +207,7 @@ def delete_project(id):
         db.session.delete(update)
 
     Project.query.filter_by(id=id).delete()
+
     db.session.commit()
 
     return redirect("/dashboard")
@@ -229,6 +246,7 @@ def add_update():
                 ))
 
         db.session.commit()
+
         return redirect("/dashboard")
 
     return render_template("add_update.html", projects=projects)
@@ -246,19 +264,22 @@ def edit_update(id):
         update.project_id = request.form["project_id"]
         update.status = request.form["status"]
         update.note = request.form["note"]
+
         db.session.commit()
+
         return redirect("/dashboard")
 
     return render_template("edit_update.html", update=update, projects=projects)
 
 
-@app.route("/delete-update/<int:id>")
+@app.route("/delete-update/<int:id>", methods=["GET", "POST"])
 def delete_update(id):
     if not login_required():
         return redirect("/")
 
     UpdateFile.query.filter_by(update_id=id).delete()
     Update.query.filter_by(id=id).delete()
+
     db.session.commit()
 
     return redirect("/dashboard")
@@ -291,18 +312,21 @@ def edit_task(id):
     if request.method == "POST":
         task.text = request.form["text"]
         task.status = request.form["status"]
+
         db.session.commit()
+
         return redirect("/dashboard")
 
     return render_template("edit_task.html", task=task)
 
 
-@app.route("/delete-task/<int:id>", methods=["POST"])
+@app.route("/delete-task/<int:id>", methods=["GET", "POST"])
 def delete_task(id):
     if not login_required():
         return redirect("/")
 
     Task.query.filter_by(id=id).delete()
+
     db.session.commit()
 
     return redirect("/dashboard")
